@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<robot name="partnet_f0a5f6d2cf8fcb72c12d8e00a78db6e2">
+	<link name="world"/>
+	<joint name="joint_0" type="floating">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_0"/>
+		<parent link="world"/>
+	</joint>
+
+	<link name="link_0">
+		<inertial>
+            <mass value="0.001" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+        </inertial>
+		<visual name="lid-7">
+			<origin xyz="-0.007005959241653967 0 -0.007542109902568375"/>
+			<geometry>
+				<!-- <mesh filename="textured_objs/original-7.obj" scale="0.15 0.15 0.15"/> -->
+				<mesh filename="textured_objs/cap6.obj" scale="0.15 0.15 0.15"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.007005959241653967 0 -0.007542109902568375"/>
+			<geometry>
+				<mesh filename="textured_objs/original-7.obj" scale="0.15 0.15 0.15"/>
+			</geometry>
+		</collision>
+	</link>
+	
+</robot>

@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<robot name="panda" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="panda_hand">
+    <visual>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/visual/hand.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/collision/hand.obj"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="panda_leftfinger">
+    <visual>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/visual/finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/collision/finger.obj"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="panda_rightfinger">
+    <visual>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/visual/finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/collision/finger.obj"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="brush">
+    <visual>
+      <origin rpy="0 1.571 0 " xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/brush_simple.obj" scale="0.01 0.01 0.01"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 1.571 0 " xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/brush_simple.obj" scale="0.01 0.01 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="panda_finger_joint1" type="prismatic">
+    <parent link="panda_hand"/>
+    <child link="panda_leftfinger"/>
+    <origin rpy="0 0 0" xyz="0 0 0.0584"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="10.0"/>
+    <limit effort="20" lower="0.0" upper="0.04" velocity="0.2"/>
+  </joint>
+  <joint name="panda_finger_joint2" type="prismatic">
+    <parent link="panda_hand"/>
+    <child link="panda_rightfinger"/>
+    <origin rpy="0 0 0" xyz="0 0 0.0584"/>
+    <axis xyz="0 -1 0"/>
+    <dynamics damping="10.0"/>
+    <limit effort="20" lower="0.0" upper="0.04" velocity="0.2"/>
+    <mimic joint="panda_finger_joint1"/>
+  </joint>
+  <joint name="panda_brush_joint" type="fixed">
+    <parent link="panda_hand"/>
+    <child link="brush"/>
+    <origin rpy="0 0 0" xyz="0 0 0.0584"/>
+  </joint>
+</robot>
+
+

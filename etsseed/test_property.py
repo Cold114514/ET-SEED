@@ -1,0 +1,1 @@
+from model.se3_transformer import SE3ManiNet_Invariant

@@ -1,0 +1,24 @@
+<robot name="root">
+  <link name="link_franka_description_convex_piece_0">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.12E-05"/>
+      <inertia ixx="2.68E-09" ixy="9.75E-14" ixz="-2.27E-14" iyy="8.16E-11" iyz="-8.90E-10" izz="3.33E-09"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="franka_description_convex_piece_0.obj" scale="1.0000E+00 1.0000E+00 1.0000E+00"/>
+      </geometry>
+      <material name="">
+        <color rgba="7.50E-01 7.50E-01 7.50E-01 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="franka_description_convex_piece_0.obj" scale="1.0000E+00 1.0000E+00 1.0000E+00"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>
