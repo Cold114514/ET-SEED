@@ -54,7 +54,8 @@ python etseed/env/toy_env.py --num_traj=50 --output_file=rotate_triangle.npy --t
 
 
 ### 🚀 Training
-The following code runs training for our method. Fill the dataset path with the data_out_dir argument in the previous section.
+The following code runs training for our method. Fill the dataset path with the data_out_dir argument in the previous section. 
+#### TBD
 ```
 python train.py
 ```
