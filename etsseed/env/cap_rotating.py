@@ -338,61 +338,102 @@ class CapRotatingEnv():
         SE3 = myutils.transform_to_SE3(pose)
         return SE3
     
-if __name__ == "__main__":
+def main():
+    # --- Command-Line Argument Parsing ---
+    parser = argparse.ArgumentParser(description='Generate cap rotating data')
+    parser.add_argument('--steps_per_traj', type=int, default=50,
+                        help='Number of steps per trajectory')
+    parser.add_argument('--save_interval', type=int, default=1,
+                        help='Interval to save data points')
+    parser.add_argument('--output_file', type=str, default='cap_rotating.npy',
+                        help='Name of the output data file')
+    parser.add_argument('--task_name', type=str, default='cap_rotating',
+                        help='Name of the task directory within log/demo')
+    parser.add_argument('--d', type=float, default=0.08,
+                        help='Distance parameter for key points generation')
+    parser.add_argument('--save_base_dir', type=str, default='log/demo',
+                        help='Base directory to save data')
+    args = parser.parse_args()
+
+    # --- Dynamic Save Path Setup ---
+    save_base_dir = args.save_base_dir
+    save_dir = os.path.join(save_base_dir, args.task_name)
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if not exists
+    output_file = f"{args.steps_per_traj}_{args.output_file}"
+    output_path = os.path.join(save_dir, output_file)
+
+    # --- Environment Configuration and Initialization ---
     cfg_path = "config/task/rotating.py"
     sys.path.append(os.path.dirname(cfg_path))
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    cfg = importlib.import_module(os.path.basename(cfg_path)[:-3]).get_cfg_defaults()
+    
+    try:
+        cfg_module = os.path.basename(cfg_path)[:-3]
+        cfg = importlib.import_module(cfg_module).get_cfg_defaults()
+    except ImportError:
+        print(f"Error importing configuration from {cfg_path}")
+        return 1
+
     env = CapRotatingEnv(cfg, save_images=True, save_pts=False)
     print("Env initialized")
-    
-    # define num_steps #
-    key_points = myutils.rotate_cap(d = 0.08)
-    steps_per_traj = 50
-    actions3d = myutils.threedim_geometry_interpolation(key_points, steps_per_traj, is_closed=False)
-    
-    save_interval = 1
-    num_steps = np.shape(actions3d)[0]
-    actions = np.concatenate([actions3d[:,0][:,None], actions3d[:,1][:,None], actions3d[:,2][:,None]], axis=1)
-    
-    # warm up, drive the robot to the initial position
+
+    # --- Key Points and Actions Generation ---
+    key_points = myutils.rotate_cap(d=args.d)
+    actions3d = myutils.threedim_geometry_interpolation(
+        key_points, args.steps_per_traj, is_closed=False
+    )
+    actions = np.column_stack((actions3d[:, 0], actions3d[:, 1], actions3d[:, 2]))
+
+    # --- Warm-Up Steps ---
     for _ in range(10):
-        # pts, pose = env.step(None)  #pts have the shape of (N, 6)
-        pose = env.step(None)
+        env.step(None)  # Move to initial position
     print("Warm up done")
-    data = {}
-    data['pts'] = []
-    data['pose'] = []
-    data['gt_action'] = []
-    data['episode_ends'] = []
-    obs_pts = env.get_pts()
-    data['pts'].append(np.array(obs_pts))
+
+    # --- Data Collection Preparation ---
+    num_steps = actions.shape[0]
+    data = {
+        'pts': [],
+        'pose': [],
+        'gt_action': [],
+        'episode_ends': []
+    }
+
+    # Capture initial state
+    data['pts'].append(env.get_pts())
     data['pose'].append(env.get_state())
+
+    # --- Execute Actions and Collect Data ---
     for i in range(num_steps):
-        if_log = (((i+1) % save_interval) == 0) or (i == num_steps-1)
-        obs_pts = env.get_pts()
+        if_log = ((i + 1) % args.save_interval == 0) or (i == num_steps - 1)
         action = actions[i]
         SE3action = env.process_action(action)
-        # pts, pose = env.step(SE3action, if_log=if_log)
-        pose = env.step(SE3action, if_log=if_log)
-        if (if_log):
-            data['gt_action'].append(env.get_state())
-            #! chenrui: 注意这里是有相位差的，由于最开始存下了pts和pose，第j个pose对应第j+1个action
-            data['pts'].append(np.array(obs_pts))
-            data['pose'].append(env.get_state())
-            data['episode_ends'].append(np.array(10))
-            print('--------------------------------')
-            print(f"Step {i} done")
-            print("pose\n", data['pose'][-2])
-            print("gt_action\n", data['gt_action'][-1])
-    #! chenrui: 相位差，最后多存了一个pose和pts，需要删除
-    data['pts'].pop(-1)
-    data['pose'].pop(-1)
+        env.step(SE3action, if_log=if_log)  # Execute action
 
-    data['pts'] = np.array(data['pts'])
-    data['pose'] = np.array(data['pose'])
-    data['gt_action'] = np.array(data['gt_action'])
-    data['episode_ends'] = np.array(data['episode_ends'])
+        if if_log:
+            data['gt_action'].append(env.get_state())
+            new_pts = env.get_pts()
+            data['pts'].append(new_pts)
+            data['pose'].append(env.get_state())
+            data['episode_ends'].append(10)  # Placeholder value
+
+            print(f"Step {i} done")
+            print(f"Pose:\n{env.get_state()}")
+            print(f"Action:\n{SE3action}")
+
+    # Remove trailing duplicates due to phase shift
+    data['pts'] = data['pts'][:-1]
+    data['pose'] = data['pose'][:-1]
+
+    # Convert all data lists to numpy arrays
     for key in data.keys():
-        print(key, data[key].shape)
-    np.save(f"{env.save_path}/data.npy", data)
+        data[key] = np.array(data[key], dtype=np.float32)
+
+    # --- Save Data ---
+    try:
+        np.save(output_path, data)
+        print(f"Data saved to: {output_path}")
+        for key, arr in data.items():
+            print(f"{key}: {arr.shape}")
+    except Exception as e:
+        print(f"Error saving data: {e}")
+        return 1

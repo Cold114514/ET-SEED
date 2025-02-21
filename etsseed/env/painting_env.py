@@ -27,7 +27,7 @@ from gym import spaces
 import random
 import torch
 import time
-
+import argparse
 
 class PaintingEnv():
     def __init__(self, cfg, task_name="painting", num_points=1024, save_path="log", save_images=True, save_pts=True):
@@ -300,6 +300,20 @@ class PaintingEnv():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate painting data with different trajectories')
+    parser.add_argument('--trajectory', type=str, default='star', 
+                        choices=['star', 'heart', 'calligraphy'], 
+                        help='Type of trajectory to generate (star, heart, calligraphy)')
+    parser.add_argument('--save_dir', type=str, default='log/demo', 
+                        help='Base directory for saving data (default: log/demo)')
+    args = parser.parse_args()
+
+    # Set up the save path dynamically
+    save_base_dir = args.save_dir
+    save_dir = os.path.join(save_base_dir, args.trajectory)
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
+    output_path = os.path.join(save_dir, f"{args.trajectory}_data.npy")
+        
     cfg_path = 'config/task/painting.py'
     sys.path.append(os.path.dirname(cfg_path))
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -321,8 +335,6 @@ if __name__ == "__main__":
     num_steps = np.shape(actions2d)[0]
     actions = np.concatenate([actions2d[:,0][:,None], np.zeros((num_steps, 1)), actions2d[:,1][:,None]], axis=1)
 
-    # warm up, drive the robot to the initial position
-    #! 这几步是为了让机械臂到达初始位置，不计入正式轨迹
     for _ in range(10):
         pts, pose = env.step(None)  #pts have the shape of (N, 6)
     print("Warm up done")
@@ -342,15 +354,10 @@ if __name__ == "__main__":
         pts, pose = env.step(SE3action, if_log=if_log)
         if (if_log):
             data['gt_action'].append(env.get_state())
-            #! chenrui: 注意这里是有相位差的，由于最开始存下了pts和pose，第j个pose对应第j+1个action
             data['pts'].append(np.array(obs_pts))
             data['pose'].append(env.get_state())
             data['episode_ends'].append(np.array(10))
-            print('--------------------------------')
-            print(f"Step {i} done")
-            print("pose\n", data['pose'][-2])
-            print("gt_action\n", data['gt_action'][-1])
-    #! chenrui: 相位差，最后多存了一个pose和pts，需要删除
+    
     data['pts'].pop(-1)
     data['pose'].pop(-1)
 
@@ -360,5 +367,7 @@ if __name__ == "__main__":
     data['episode_ends'] = np.array(data['episode_ends'])
     for key in data.keys():
         print(key, data[key].shape)
+    os.makedirs(args.save_path, exist_ok=True)
+    np.save(os.path.join(args.save_path, f"{traj_type}_data.npy"), data)
     np.save(f"{env.save_path}/data.npy", data)
 

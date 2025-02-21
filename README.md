@@ -39,10 +39,17 @@ Download the Isaac Gym Preview release from the [website](https://developer.nvid
     conda activate equi
     ```
 
-### 📚 Demonstration Generation
-The following code generates demonstrations for simulated environments, you can change toy_env.py with other environments files.
+### 🦾 Equivariance Check
+The following code runs equivariance check for our method.
 ```
-python etseed/env/toy_env.py
+python test_equiv.py
+```
+
+
+### 📚 Demonstration Generation
+The following code generates demonstrations for simulated environments, you can change [toy_env.py] with other environments files and Replace [task_name], [num_traj] and [output_file] with your choices.
+```
+python etseed/env/toy_env.py --num_traj=50 --output_file=rotate_triangle.npy --task_name=rotate_triangle
 ```
 
 
@@ -58,6 +65,7 @@ python train.py
 * Our `SE(3)-Transformer` implementation is adapted from [RiEMann](https://github.com/HeegerGao/RiEMann).
 * Our `Diffusion process` implementation is adapted from [DiffusionReg](https://github.com/Jiang-HB/DiffusionReg)
 * Our code refers to the implementation of [Diffusion Policy](https://github.com/real-stanford/diffusion_policy), [3D Diffusion Policy](https://github.com/YanjieZe/3D-Diffusion-Policy), [EquiBot](https://github.com/yjy0625/equibot/tree/main), [Equivariant Diffusion Policy](https://github.com/pointW/equidiff), [Diffusion-EDFs](https://github.com/tomato1mule/diffusion_edf)
+* Thanks for their great work!
 
 
 ## 📝 Citation and Reference

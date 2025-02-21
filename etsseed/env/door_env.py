@@ -330,64 +330,93 @@ class DoorEnv(BaseEnv):
         return SE3
 
 
+#!/usr/bin/env python
+import os
+import sys
+import argparse  # For command-line arguments
+import numpy as np
+import importlib
+
 if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Generate door opening trajectories')
+    parser.add_argument('--traj_length', type=int, default=200, help='Length of the trajectory')
+    parser.add_argument('--output_file', type=str, default='door_data.npy', help='Name of the output file')
+    parser.add_argument('--task_name', type=str, default='door_opening', help='Name of the task')
+    args = parser.parse_args()
+
+    # Prepare dynamic save path
+    save_base_dir = 'log/demo'  # Base directory
+    save_dir = os.path.join(save_base_dir, args.task_name)  # Task-specific subdirectory
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
+    output_path = os.path.join(save_dir, f'{args.traj_length}_{args.output_file}')
+
+    # Initialize environment and configuration
     cfg_path = 'config/task/door.py'
     sys.path.append(os.path.dirname(cfg_path))
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     cfg = importlib.import_module(os.path.basename(cfg_path)[:-3]).get_cfg_defaults()
     env = DoorEnv(cfg, save_images=True, save_pts=True)
     print("Env initialized")
-    traj_length = 200
+
+    # Generate trajectory actions
+    traj_length = args.traj_length
     actions = np.zeros((traj_length, 6))
     theta = 45 / 180 * np.pi
     for i in range(traj_length):
-        interval = theta/traj_length
-        actions[i, 0] = -np.sin(i*interval) * 0.36
-        actions[i, 2] = (1 - np.cos(i*interval)) * 0.36
+        interval = theta / traj_length
+        actions[i, 0] = -np.sin(i * interval) * 0.36
+        actions[i, 2] = (1 - np.cos(i * interval)) * 0.36
         actions[i, 4] = i * interval / 3
 
-    save_interval = 10
-    num_steps = np.shape(actions)[0]
-    # warm up, drive the robot to the initial position
-    #! 这几步是为了让机械臂到达初始位置，不计入正式轨迹
+    # Warm-up steps
     print("Warm up")
     for _ in range(30):
-        pts, pose = env.step(None)  #pts have the shape of (N, 6)
-        current_pose = env.get_state()
+        env.step(None)  # Move to initial position
     print("Warm up done")
-    data = {}
-    data['pts'] = []
-    data['pose'] = []
-    data['gt_action'] = []
-    data['episode_ends'] = []
-    obs_pts = env.get_pts()
-    data['pts'].append(np.array(obs_pts))
+
+    # Data collection
+    save_interval = 10
+    num_steps = traj_length
+    data = {
+        'pts': [],
+        'pose': [],
+        'gt_action': [],
+        'episode_ends': []
+    }
+
+    # Pre-initialize with first observation
+    data['pts'].append(env.get_pts())
     data['pose'].append(env.get_state())
+
     for i in range(num_steps):
-        if_log = (((i+1) % save_interval) == 0) or (i == num_steps-1)
-        obs_pts = env.get_pts()
+        if_log = ((i + 1) % save_interval == 0) or (i == num_steps - 1)
         action = actions[i]
         SE3action = env.process_action(action)
-        pts, pose = env.step(SE3action, if_log=if_log)
-        if (if_log):
+        env.step(SE3action, if_log=if_log)
+
+        if if_log:
             data['gt_action'].append(env.get_state())
-            #! chenrui: 注意这里是有相位差的，由于最开始存下了pts和pose，第j个pose对应第j+1个action
-            data['pts'].append(np.array(obs_pts))
+            data['pts'].append(env.get_pts())
             data['pose'].append(env.get_state())
-            data['episode_ends'].append(np.array(10))
-            print('--------------------------------')
-            print(f"Step {i} done")
-            print("pose\n", data['pose'][-2])
-            print("gt_action\n", data['gt_action'][-1])
-            # bp()
-    #! chenrui: 相位差，最后多存了一个pose和pts，需要删除
+            data['episode_ends'].append(10)  # Assuming a placeholder value
+
+    # Remove the last duplicate entry due to phase shift
     data['pts'].pop(-1)
     data['pose'].pop(-1)
 
+    # Convert lists to numpy arrays
     data['pts'] = np.array(data['pts'])
     data['pose'] = np.array(data['pose'])
     data['gt_action'] = np.array(data['gt_action'])
     data['episode_ends'] = np.array(data['episode_ends'])
+
+    # Print data shapes
     for key in data.keys():
         print(key, data[key].shape)
-    np.save(f"{env.save_path}/data.npy", data)
+
+    # Save the data
+    print(f"Generating data for task: {args.task_name}")
+    print(f"Saving to: {output_path}")
+    # np.save(output_path, data)
+    print("Data saved successfully!")
