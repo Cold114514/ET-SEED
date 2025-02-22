@@ -91,22 +91,3 @@ If you find this paper useful, please consider staring 🌟 this repo and citing
     url={https://openreview.net/forum?id=OheAR2xrtb}
 }
 ```
-
-## 😺 Related Project
-
-**Leveraging SE(3) Equivariance for Learning 3D Geometric Shape Assembly (ICCV 2023)**
-[[Project page]](https://crtie.github.io/SE-3-part-assembly/)
-
-We tackle multi-part geometrically assembly task, leveraging SE(3) equivariance and invariance, which fits the natural characteristic of the task and narrows the solution space.
-
-<img src="media/part_assembly.gif" alt="drawing" width="50%"/>
-
-
-**EqvAfford: SE (3) Equivariance for Point-Level Affordance Learning (CVPRW 2024)**
-[[paper]](https://arxiv.org/abs/2408.01953)
-
-We propose EqvAfford framework, with novel designs to guarantee the SE(3) equivariance in point-level affordance learning for downstream robotic manipulation.
-
-
-<img src="media/eqvafford.png" alt="drawing" width="50%"/>
-
