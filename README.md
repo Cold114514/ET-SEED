@@ -1,5 +1,5 @@
 # ET-SEED: Efficient Trajectory-Level SE(3) Equivariant Diffusion Policy
-[[Project page]](https://trust-rag.github.io/) | [[Paper]](https://arxiv.org/pdf/2501.00879) | [[Video]](https://www.youtube.com/watch?v=IiOBj3ww-qA)
+[[Project page]](https://et-seed.github.io/) | [[Paper]](https://arxiv.org/pdf/2501.00879) | [[Video]](https://www.youtube.com/watch?v=IiOBj3ww-qA)
 
 [Chenrui Tie*](https://crtie.github.io)<sup>1,2</sup>, [Yue Chen*](https://github.com/Cold114514)<sup>1</sup>, [Ruihai Wu*](https://warshallrho.github.io/)<sup>1</sup>, [Boxuan Dong](https://github.com/dongbx0125)<sup>1</sup>, [Zeyi Li](https://github.com/1izeyi)<sup>1</sup>, [Chongkai Gao](https://chongkaigao.com/)<sup>2</sup>, [Hao Dong](https://zsdonghao.github.io/)<sup>1</sup> 
 
@@ -7,7 +7,7 @@
 
 *International Conference on Learning Representations (ICLR) 2025*
 
-<img src="media/teaser.jpg" alt="drawing" width="60%"/>
+<img src="media/teaser.jpg" alt="drawing" width="65%"/>
 
 This repository includes:
 
@@ -40,7 +40,7 @@ Download the Isaac Gym Preview release from the [website](https://developer.nvid
     ```
 
 ### 🦾 Equivariance Check
-The following code runs equivariance check for our method.
+Run the following command to check equivariance:
 ```
 python test_equiv.py
 ```
@@ -52,20 +52,29 @@ The following code generates demonstrations for simulated environments, you can 
 python etseed/env/toy_env.py --num_traj=50 --output_file=rotate_triangle.npy --task_name=rotate_triangle
 ```
 
+**Tips:** if you want to change the setting of the simulation environment, you can refer to the [config/README.md] file.
 
-### 🚀 Training
-The following code runs training for our method. Fill the dataset path with the data_out_dir argument in the previous section. 
-#### TBD
+
+### 🚀 Training and Evaluation
+The following code runs training for our method. 
+
+Fill the dataset path with the data_out_dir argument in the previous section. 
+
 ```
 python train.py
 ```
+Evaluate the model:
+```
+python test.py
+```
+
 
 
 ## 🙏 Acknowledgement
-
 * Our `SE(3)-Transformer` implementation is adapted from [RiEMann](https://github.com/HeegerGao/RiEMann).
 * Our `Diffusion process` implementation is adapted from [DiffusionReg](https://github.com/Jiang-HB/DiffusionReg)
-* Our code refers to the implementation of [Diffusion Policy](https://github.com/real-stanford/diffusion_policy), [3D Diffusion Policy](https://github.com/YanjieZe/3D-Diffusion-Policy), [EquiBot](https://github.com/yjy0625/equibot/tree/main), [Equivariant Diffusion Policy](https://github.com/pointW/equidiff), [Diffusion-EDFs](https://github.com/tomato1mule/diffusion_edf)
+* If you want to replace the SE(3)-Transformer with Equiformer v2, you can refer to [Orbitgrasp](https://github.com/BoceHu/orbitgrasp). It applies Equiformer v2, which features improved efficiency and scalability, to the grasping task.
+* Our code refers to the implementation of [Diffusion Policy](https://github.com/real-stanford/diffusion_policy), [3D Diffusion Policy](https://github.com/YanjieZe/3D-Diffusion-Policy), [EquiBot](https://github.com/yjy0625/equibot/tree/main), [Equivariant Diffusion Policy](https://github.com/pointW/equidiff), [Diffusion-EDFs](https://github.com/tomato1mule/diffusion_edf), [Orbitgrasp](https://github.com/BoceHu/orbitgrasp)
 * Thanks for their great work!
 
 
@@ -82,4 +91,22 @@ If you find this paper useful, please consider staring 🌟 this repo and citing
     url={https://openreview.net/forum?id=OheAR2xrtb}
 }
 ```
+
+## 😺 Related Project
+
+**Leveraging SE(3) Equivariance for Learning 3D Geometric Shape Assembly (ICCV 2023)**
+[[Project page]](https://crtie.github.io/SE-3-part-assembly/)
+
+We tackle multi-part geometrically assembly task, leveraging SE(3) equivariance and invariance, which fits the natural characteristic of the task and narrows the solution space.
+
+<img src="media/part_assembly.gif" alt="drawing" width="50%"/>
+
+
+**EqvAfford: SE (3) Equivariance for Point-Level Affordance Learning (CVPRW 2024)**
+[[paper]](https://arxiv.org/abs/2408.01953)
+
+We propose EqvAfford framework, with novel designs to guarantee the SE(3) equivariance in point-level affordance learning for downstream robotic manipulation.
+
+
+<img src="media/eqvafford.png" alt="drawing" width="50%"/>
 

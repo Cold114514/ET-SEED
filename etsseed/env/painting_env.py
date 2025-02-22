@@ -335,6 +335,8 @@ if __name__ == "__main__":
     num_steps = np.shape(actions2d)[0]
     actions = np.concatenate([actions2d[:,0][:,None], np.zeros((num_steps, 1)), actions2d[:,1][:,None]], axis=1)
 
+    # warm up, drive the robot to the initial position
+    #! 这几步是为了让机械臂到达初始位置，不计入正式轨迹
     for _ in range(10):
         pts, pose = env.step(None)  #pts have the shape of (N, 6)
     print("Warm up done")
@@ -354,10 +356,15 @@ if __name__ == "__main__":
         pts, pose = env.step(SE3action, if_log=if_log)
         if (if_log):
             data['gt_action'].append(env.get_state())
+            #! chenrui: 注意这里是有相位差的，由于最开始存下了pts和pose，第j个pose对应第j+1个action
             data['pts'].append(np.array(obs_pts))
             data['pose'].append(env.get_state())
             data['episode_ends'].append(np.array(10))
-    
+            print('--------------------------------')
+            print(f"Step {i} done")
+            print("pose\n", data['pose'][-2])
+            print("gt_action\n", data['gt_action'][-1])
+    #! chenrui: 相位差，最后多存了一个pose和pts，需要删除
     data['pts'].pop(-1)
     data['pose'].pop(-1)
 

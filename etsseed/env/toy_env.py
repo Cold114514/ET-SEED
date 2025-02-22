@@ -26,6 +26,7 @@ from gym import spaces
 import random
 import torch
 import time
+import argparse
 
 colors = [gymapi.Vec3(1.0, 0.0, 0.0),
           gymapi.Vec3(1.0, 127.0/255.0, 0.0),
@@ -323,68 +324,58 @@ def SE3_to_se2(SE3):
     return se2       
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate trajectories for ToyEnv2D')
+    parser.add_argument('--num_trajs', type=int, default=50, help='Number of trajectories to generate')
+    parser.add_argument('--steps_per_traj', type=int, default=10, help='Number of steps per trajectory')
+    parser.add_argument('--output_file', type=str, default='rotate_triangle.npy', help='Output file name')
+    parser.add_argument('--task_name', type=str, default='rotate_triangle', help='Task name')
+    args = parser.parse_args()
+    
+    save_base_dir = 'log/demo'
+    save_dir = os.path.join(save_base_dir, args.task_name)
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
+    output_path = os.path.join(save_dir, f'{args.num_trajs}_{args.output_file}')
+    
     cfg_path = 'config/task/toy2D.py'
     sys.path.append(os.path.dirname(cfg_path))
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     cfg = importlib.import_module(os.path.basename(cfg_path)[:-3]).get_cfg_defaults()
-    num_trajs = 50
-    steps_per_traj = 10
-    target_motion = torch.tensor([0.0, 0.0, np.pi/2])
+    num_trajs = args.num_trajs  # Use the parsed argument
+    steps_per_traj = args.steps_per_traj  # Use the parsed argument
+    target_motion = torch.tensor([0.0, 0.0, np.pi])
     env = ToyEnv2D(cfg, save_images=True, save_pts=True)
     print("Env initialized")  
+      
+    data = {'pts': [], 'pose': [], 'gt_action': [], 'episode_ends': [], 'init_state': []}
+    
     for traj in range(num_trajs):
-        #! chenrui: 这里的逻辑是，先将三角形随机初始化位置，然后让它运动成一条等变的轨迹
         init_x = (np.random.rand() - 0.5) * 0.2
         init_z = (np.random.rand() - 0.5) * 0.2
-        init_rot = (np.random.rand() - 0.5) * np.pi
-        init_state = torch.tensor([init_x, init_z, init_rot])
-        # init_state = torch.tensor([-0.0592492, 0.06098646, 1.2646412 ])
-        print("init_state:", init_state)
+        init_rot = (np.random.rand() * 0.2) * np.pi
+        init_state = torch.tensor([0.0, 0.0, init_rot])
         target_state = init_state + target_motion
-        data = {}
-        data['pts'] = []
-        data['pose'] = []
-        data['gt_action'] = []
-        data['episode_ends'] = []
-        data['init_state'] = []
-        data['init_state'].append(np.array(init_state))
-        env.set_state(init_state)
         
-        action_list = list()
+        env.set_state(init_state)
+        data['init_state'].append(np.array(init_state))
+        
+        action_list = []
         for i in range(steps_per_traj):
             action = target_state * (i + 1) / (steps_per_traj)
-            # observation data
             obs_pts, obs_pose = env.get_observation()
-            print("obs_pose:", obs_pose)
             data['pts'].append(np.array(obs_pts))
             data['pose'].append(np.array(obs_pose).squeeze())
-            print("!!!step_idx:",i)
-
-            act_pts, act_pose = env.step(action)  #pts have the shape of (N, 6)
-            # print("act_pose",act_pose)
-            # exit(0)
-            print("action",action)
-            
-            # print("act_pose.shape",act_pose.shape)
-            print("SE2_act_pose",SE3_to_se2(act_pose))
-            # print("after_pose",np.array(act_pose).squeeze())
-            # exit(0)
+            act_pts, act_pose = env.step(action)  
             data['gt_action'].append(np.array(act_pose).squeeze())
-            data['episode_ends'].append(np.array(steps_per_traj))
-            # print(pts.shape)
-            # print(pose.shape)
-        data['pts'] = np.array(data['pts'])
-        data['pose'] = np.array(data['pose'])
-        data['gt_action'] = np.array(data['gt_action'])
-        data['init_state'] = np.array(data['init_state'])
-        # print("\n\n\ngt_action.shape",data['gt_action'].shape)
-        # print("")
-        # print("\n\n\npose_shape",data['pose'].shape)
-        # print("pts_shape",data['pts'].shape)
-        # print("pose",data['pose'])
-        # print("pts",data['pts'])
-        # print('action_list',action_list)
-        # data['episode_ends'] = np.array(data['episode_ends'])
-    np.save(f"log/{num_trajs}_rotate_triangle.npy", data)
-        # exit(0)
-        # bp()
+            data['episode_ends'].append(steps_per_traj)
+    
+    # Convert lists to numpy arrays
+    data['pts'] = np.array(data['pts'])
+    data['pose'] = np.array(data['pose'])
+    data['gt_action'] = np.array(data['gt_action'])
+    data['init_state'] = np.array(data['init_state'])
+    
+    
+    print("Generating data for task:", args.task_name)
+    print("Saving to:", output_path)
+    np.save(output_path, data)
+    print("Success!!")
